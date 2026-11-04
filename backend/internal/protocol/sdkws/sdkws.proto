@@ -1,0 +1,38 @@
+syntax = "proto3";
+
+package papercompare.sdkws;
+
+option go_package = "github.com/GouTouZhao/PaperCompare/internal/protocol/sdkws;protosdkws";
+
+message Empty {}
+
+message IDReq {
+  int64 id = 1;
+}
+
+message IDsReq {
+  repeated int64 ids = 1;
+}
+
+// 原文证据：页码 + 引用文本
+message Evidence {
+  int32 page = 1;
+  string quote = 2;
+  string section = 3;
+}
+
+message PaperBrief {
+  int64 id = 1;
+  string title = 2;
+  repeated string authors = 3;
+  int32 publication_year = 4;
+  string journal = 5;
+  string reading_status = 6;
+  string parse_status = 7;
+  float progress = 8;
+  int32 current_page = 9;
+  int64 last_read_at = 10;
+  int64 created_at = 11;
+  repeated string tags = 12;
+}
+

@@ -1,0 +1,339 @@
+syntax = "proto3";
+
+package papercompare.paper;
+
+import "sdkws/sdkws.proto";
+
+option go_package = "github.com/GouTouZhao/PaperCompare/internal/protocol/paper;protopaper";
+
+message TagItem {
+  int64 id = 1;
+  string name = 2;
+  string color = 3;
+  int64 paper_count = 4;
+}
+
+message CollectionItem {
+  int64 id = 1;
+  int64 parent_id = 2;
+  string name = 3;
+  string description = 4;
+  int64 paper_count = 5;
+  int64 created_at = 6;
+}
+
+message PaperItem {
+  int64 id = 1;
+  int64 user_id = 2;
+  string title = 3;
+  string abstract = 4;
+  repeated string authors = 5;
+  int32 publication_year = 6;
+  string journal = 7;
+  string doi = 8;
+  string language = 9;
+  string paper_type = 10;
+  repeated string keywords = 11;
+  string publication_url = 12;
+  string reading_status = 13;
+  string parse_status = 14;
+  bool is_favorite = 15;
+  string file_name = 16;
+  int64 file_size = 17;
+  int32 page_count = 18;
+  string sha256 = 19;
+  int32 current_page = 20;
+  float progress = 21;
+  int64 last_read_at = 22;
+  repeated TagItem tags = 23;
+  repeated CollectionItem collections = 24;
+  int64 created_at = 25;
+  int64 updated_at = 26;
+}
+
+message PaperPageItem {
+  int32 page_number = 1;
+  string raw_text = 2;
+  string clean_text = 3;
+}
+
+message PaperSectionItem {
+  int64 id = 1;
+  string section_title = 2;
+  string section_type = 3;
+  int32 start_page = 4;
+  int32 end_page = 5;
+  string content = 6;
+  int32 section_order = 7;
+}
+
+message AnalysisField {
+  string value = 1;
+  string source_type = 2;
+  string verification_status = 3;
+  repeated papercompare.sdkws.Evidence evidence = 4;
+}
+
+message PaperAnalysisData {
+  int64 id = 1;
+  int64 paper_id = 2;
+  AnalysisField research_problem = 3;
+  AnalysisField research_objective = 4;
+  AnalysisField contributions = 5;
+  AnalysisField methodology = 6;
+  AnalysisField datasets = 7;
+  AnalysisField exp_settings = 8;
+  AnalysisField metrics = 9;
+  AnalysisField results = 10;
+  AnalysisField limitations = 11;
+  AnalysisField future_work = 12;
+  string extra_json = 13;
+  int32 analysis_version = 14;
+  int64 updated_at = 15;
+}
+
+message ProcessingJobItem {
+  int64 id = 1;
+  int64 paper_id = 2;
+  string job_type = 3;
+  string status = 4;
+  int32 progress = 5;
+  string error_message = 6;
+  int64 created_at = 7;
+  int64 finished_at = 8;
+}
+
+message RegisterPaperUploadReq {
+  string title = 1;
+  string file_path = 2;
+  string original_filename = 3;
+  int64 file_size = 4;
+  string mime_type = 5;
+  string sha256 = 6;
+  bool force_upload = 7;
+  bool auto_analyze = 8;
+}
+
+message RegisterPaperUploadResp {
+  bool duplicate_found = 1;
+  PaperItem duplicate_paper = 2;
+  PaperItem paper = 3;
+  ProcessingJobItem job = 4;
+}
+
+message ListPapersReq {
+  string keyword = 1;
+  string author = 2;
+  int32 year_from = 3;
+  int32 year_to = 4;
+  int64 tag_id = 5;
+  int64 collection_id = 6;
+  string reading_status = 7;
+  string parse_status = 8;
+  bool favorite_only = 9;
+  string sort_by = 10;
+  string sort_order = 11;
+  int32 page = 12;
+  int32 page_size = 13;
+}
+
+message ListPapersResp {
+  repeated PaperItem list = 1;
+  int64 total = 2;
+}
+
+message GetPaperDetailResp {
+  PaperItem paper = 1;
+  repeated PaperSectionItem sections = 2;
+  PaperAnalysisData analysis = 3;
+  ProcessingJobItem latest_job = 4;
+}
+
+message UpdatePaperMetadataReq {
+  int64 id = 1;
+  string title = 2;
+  string abstract = 3;
+  repeated string authors = 4;
+  int32 publication_year = 5;
+  string journal = 6;
+  string doi = 7;
+  string language = 8;
+  string paper_type = 9;
+  repeated string keywords = 10;
+  string publication_url = 11;
+  string reading_status = 12;
+  bool is_favorite = 13;
+  repeated int64 tag_ids = 14;
+  repeated int64 collection_ids = 15;
+}
+
+message BatchActionReq {
+  repeated int64 paper_ids = 1;
+  string action = 2; // status, favorite, add_tag, remove_tag, add_collection, remove_collection, delete
+  string status_value = 3;
+  bool favorite_value = 4;
+  int64 tag_id = 5;
+  int64 collection_id = 6;
+}
+
+message GetPaperPagesResp {
+  repeated PaperPageItem pages = 1;
+  repeated PaperSectionItem sections = 2;
+}
+
+message SearchInPaperReq {
+  int64 paper_id = 1;
+  string query = 2;
+}
+
+message SearchHit {
+  int32 page_number = 1;
+  string snippet = 2;
+  int32 count = 3;
+}
+
+message SearchInPaperResp {
+  repeated SearchHit hits = 1;
+  int32 total_matches = 2;
+}
+
+message UpdatePaperAnalysisReq {
+  int64 paper_id = 1;
+  PaperAnalysisData analysis = 2;
+}
+
+message CreateCollectionReq {
+  int64 parent_id = 1;
+  string name = 2;
+  string description = 3;
+}
+
+message UpdateCollectionReq {
+  int64 id = 1;
+  int64 parent_id = 2;
+  string name = 3;
+  string description = 4;
+}
+
+message ListCollectionsResp {
+  repeated CollectionItem list = 1;
+}
+
+message CollectionPaperReq {
+  int64 collection_id = 1;
+  int64 paper_id = 2;
+}
+
+message CreateTagReq {
+  string name = 1;
+  string color = 2;
+}
+
+message UpdateTagReq {
+  int64 id = 1;
+  string name = 2;
+  string color = 3;
+}
+
+message ListTagsResp {
+  repeated TagItem list = 1;
+}
+
+message PaperRelationItem {
+  int64 id = 1;
+  int64 source_paper_id = 2;
+  string source_title = 3;
+  int64 target_paper_id = 4;
+  string target_title = 5;
+  string relation_type = 6; // CITES, EXTENDS, SIMILAR_METHOD, SAME_DATASET, SAME_TOPIC, CONTRASTS
+  string description = 7;
+  string source_type = 8; // manual, suggested
+  bool confirmed = 9;
+  int64 created_at = 10;
+}
+
+message CreateRelationReq {
+  int64 source_paper_id = 1;
+  int64 target_paper_id = 2;
+  string relation_type = 3;
+  string description = 4;
+}
+
+message ResearchMapResp {
+  repeated PaperItem nodes = 1;
+  repeated PaperRelationItem edges = 2;
+  repeated PaperRelationItem suggestions = 3;
+}
+
+message LookupDOIMetadataReq {
+  string doi = 1;
+  string title = 2;
+}
+
+message LookupDOIMetadataResp {
+  string title = 1;
+  repeated string authors = 2;
+  int32 publication_year = 3;
+  string journal = 4;
+  string abstract = 5;
+  string doi = 6;
+  string publication_url = 7;
+  repeated string keywords = 8;
+}
+
+message DashboardOverviewResp {
+  int64 total_papers = 1;
+  int64 unread_papers = 2;
+  int64 reading_papers = 3;
+  int64 completed_papers = 4;
+  int64 favorite_papers = 5;
+  int64 total_comparisons = 6;
+  int64 total_notes = 7;
+  int64 total_annotations = 8;
+  repeated PaperItem recent_reading = 9;
+  repeated PaperItem recent_added = 10;
+  repeated TagItem top_tags = 11;
+}
+
+message GetFilePathResp {
+  string file_path = 1;
+  string original_filename = 2;
+}
+
+service Paper {
+  rpc RegisterPaperUpload(RegisterPaperUploadReq) returns (RegisterPaperUploadResp);
+  rpc ListPapers(ListPapersReq) returns (ListPapersResp);
+  rpc GetPaperDetail(papercompare.sdkws.IDReq) returns (GetPaperDetailResp);
+  rpc UpdatePaperMetadata(UpdatePaperMetadataReq) returns (PaperItem);
+  rpc DeletePaper(papercompare.sdkws.IDReq) returns (papercompare.sdkws.Empty);
+  rpc BatchAction(BatchActionReq) returns (papercompare.sdkws.Empty);
+  rpc GetPaperFilePath(papercompare.sdkws.IDReq) returns (GetFilePathResp);
+  rpc GetPaperPages(papercompare.sdkws.IDReq) returns (GetPaperPagesResp);
+  rpc SearchInPaper(SearchInPaperReq) returns (SearchInPaperResp);
+  rpc TriggerParseAndAnalyze(papercompare.sdkws.IDReq) returns (ProcessingJobItem);
+  rpc GetJobStatus(papercompare.sdkws.IDReq) returns (ProcessingJobItem);
+  rpc GetPaperAnalysis(papercompare.sdkws.IDReq) returns (PaperAnalysisData);
+  rpc UpdatePaperAnalysis(UpdatePaperAnalysisReq) returns (PaperAnalysisData);
+
+  rpc ListCollections(papercompare.sdkws.Empty) returns (ListCollectionsResp);
+  rpc CreateCollection(CreateCollectionReq) returns (CollectionItem);
+  rpc UpdateCollection(UpdateCollectionReq) returns (CollectionItem);
+  rpc DeleteCollection(papercompare.sdkws.IDReq) returns (papercompare.sdkws.Empty);
+  rpc AddPaperToCollection(CollectionPaperReq) returns (papercompare.sdkws.Empty);
+  rpc RemovePaperFromCollection(CollectionPaperReq) returns (papercompare.sdkws.Empty);
+
+  rpc ListTags(papercompare.sdkws.Empty) returns (ListTagsResp);
+  rpc CreateTag(CreateTagReq) returns (TagItem);
+  rpc UpdateTag(UpdateTagReq) returns (TagItem);
+  rpc DeleteTag(papercompare.sdkws.IDReq) returns (papercompare.sdkws.Empty);
+
+  rpc GetResearchMap(papercompare.sdkws.Empty) returns (ResearchMapResp);
+  rpc CreateRelation(CreateRelationReq) returns (PaperRelationItem);
+  rpc DeleteRelation(papercompare.sdkws.IDReq) returns (papercompare.sdkws.Empty);
+  rpc SuggestRelations(papercompare.sdkws.IDReq) returns (ResearchMapResp);
+
+  rpc LookupMetadata(LookupDOIMetadataReq) returns (LookupDOIMetadataResp);
+  rpc GetRelatedPapers(papercompare.sdkws.IDReq) returns (ListPapersResp);
+  rpc GetDashboardOverview(papercompare.sdkws.Empty) returns (DashboardOverviewResp);
+}
+

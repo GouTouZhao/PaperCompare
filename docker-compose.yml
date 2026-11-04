@@ -1,0 +1,128 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: paper-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: "${POSTGRES_PASSWORD:-postgres}"
+      POSTGRES_DB: papercompare
+      TZ: Asia/Shanghai
+    ports:
+      - "15432:5432"
+    volumes:
+      - pg_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d papercompare"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  redis:
+    image: redis:alpine3.22
+    container_name: paper-redis
+    restart: unless-stopped
+    ports:
+      - "16379:6379"
+    volumes:
+      - redis_data:/data
+
+  paper-rpc-user:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+      args:
+        SERVICE: paper-rpc/paper-rpc-user
+    container_name: paper-rpc-user
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_started
+    environment:
+      POSTGRES_HOST: postgres
+      POSTGRES_PORT: "5432"
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: "${POSTGRES_PASSWORD:-postgres}"
+      POSTGRES_DB: papercompare
+      REDIS_HOST: redis
+      REDIS_PORT: "6379"
+
+  paper-rpc-paper:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+      args:
+        SERVICE: paper-rpc/paper-rpc-paper
+    container_name: paper-rpc-paper
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      POSTGRES_HOST: postgres
+      POSTGRES_PORT: "5432"
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: "${POSTGRES_PASSWORD:-postgres}"
+      POSTGRES_DB: papercompare
+      STORAGE_DATA_DIR: /data/storage
+      DASHSCOPE_API_KEY: "${DASHSCOPE_API_KEY:-}"
+    volumes:
+      - paper_storage:/data/storage
+
+  paper-rpc-compare:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+      args:
+        SERVICE: paper-rpc/paper-rpc-compare
+    container_name: paper-rpc-compare
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+      paper-rpc-paper:
+        condition: service_started
+    environment:
+      POSTGRES_HOST: postgres
+      POSTGRES_PORT: "5432"
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: "${POSTGRES_PASSWORD:-postgres}"
+      POSTGRES_DB: papercompare
+      DASHSCOPE_API_KEY: "${DASHSCOPE_API_KEY:-}"
+
+  paper-api:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+      args:
+        SERVICE: paper-api
+    container_name: paper-api
+    restart: unless-stopped
+    depends_on:
+      - paper-rpc-user
+      - paper-rpc-paper
+      - paper-rpc-compare
+    environment:
+      STORAGE_DATA_DIR: /data/storage
+    ports:
+      - "10002:10002"
+    volumes:
+      - paper_storage:/data/storage
+
+  paper-frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: paper-frontend
+    restart: unless-stopped
+    depends_on:
+      - paper-api
+    ports:
+      - "8080:80"
+
+volumes:
+  pg_data:
+  redis_data:
+  paper_storage:

@@ -1,0 +1,12 @@
+enable: direct
+
+rpcService:
+  api: paper-api-service
+  user: paper-user-service
+  paper: paper-paper-service
+  compare: paper-compare-service
+
+endpoints:
+  paper-user-service: "paper-user-service:10003"
+  paper-paper-service: "paper-paper-service:10004"
+  paper-compare-service: "paper-compare-service:10006"

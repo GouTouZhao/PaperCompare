@@ -1,0 +1,176 @@
+syntax = "proto3";
+
+package papercompare.compare;
+
+import "sdkws/sdkws.proto";
+
+option go_package = "github.com/GouTouZhao/PaperCompare/internal/protocol/compare;protocompare";
+
+message ComparisonFieldDef {
+  string key = 1;
+  string label = 2;
+  string description = 3;
+  int32 order = 4;
+}
+
+message ComparisonTemplateItem {
+  int64 id = 1;
+  int64 user_id = 2;
+  string name = 3;
+  string domain = 4;
+  string description = 5;
+  bool is_builtin = 6;
+  repeated ComparisonFieldDef fields = 7;
+  int64 created_at = 8;
+}
+
+message ComparisonPaperInfo {
+  int64 paper_id = 1;
+  string title = 2;
+  repeated string authors = 3;
+  int32 publication_year = 4;
+  string journal = 5;
+  string parse_status = 6;
+  int32 display_order = 7;
+}
+
+message ComparisonCell {
+  int64 id = 1;
+  int64 comparison_id = 2;
+  int64 paper_id = 3;
+  string field_key = 4;
+  string value = 5;
+  string value_status = 6; // reported, not_reported, unverified, manual, failed, empty
+  string source_type = 7; // explicit, inferred, manual, not_reported
+  repeated papercompare.sdkws.Evidence evidence = 8;
+  int64 updated_at = 9;
+}
+
+message ComparisonDifferenceAnalysis {
+  string objective_comparison = 1;
+  string method_differences = 2;
+  string dataset_differences = 3;
+  string setting_differences = 4;
+  string result_differences = 5;
+  string common_limitations = 6;
+  string evolution_trend = 7;
+  string summary_markdown = 8;
+  int64 updated_at = 9;
+}
+
+message ComparisonItem {
+  int64 id = 1;
+  int64 user_id = 2;
+  string title = 3;
+  string research_topic = 4;
+  string description = 5;
+  int64 template_id = 6;
+  string template_name = 7;
+  string status = 8; // draft, completed
+  repeated ComparisonPaperInfo papers = 9;
+  repeated ComparisonFieldDef fields = 10;
+  repeated ComparisonCell cells = 11;
+  ComparisonDifferenceAnalysis diff_analysis = 12;
+  int64 created_at = 13;
+  int64 updated_at = 14;
+}
+
+message ListTemplatesResp {
+  repeated ComparisonTemplateItem list = 1;
+}
+
+message CreateTemplateReq {
+  string name = 1;
+  string domain = 2;
+  string description = 3;
+  repeated ComparisonFieldDef fields = 4;
+}
+
+message CreateComparisonReq {
+  string title = 1;
+  string research_topic = 2;
+  string description = 3;
+  int64 template_id = 4;
+  repeated int64 paper_ids = 5;
+  repeated ComparisonFieldDef custom_fields = 6;
+  bool auto_fill = 7;
+}
+
+message UpdateComparisonReq {
+  int64 id = 1;
+  string title = 2;
+  string research_topic = 3;
+  string description = 4;
+  string status = 5;
+  repeated int64 paper_ids = 6;
+  repeated ComparisonFieldDef fields = 7;
+}
+
+message UpdateCellReq {
+  int64 comparison_id = 1;
+  int64 paper_id = 2;
+  string field_key = 3;
+  string value = 4;
+  string value_status = 5;
+  string source_type = 6;
+  repeated papercompare.sdkws.Evidence evidence = 7;
+}
+
+message BatchUpdateCellsReq {
+  int64 comparison_id = 1;
+  repeated UpdateCellReq cells = 2;
+}
+
+message AutoFillReq {
+  int64 comparison_id = 1;
+  bool overwrite_existing = 2;
+  int64 paper_id = 3;
+  string field_key = 4;
+}
+
+message UpdateDiffAnalysisReq {
+  int64 comparison_id = 1;
+  ComparisonDifferenceAnalysis diff_analysis = 2;
+}
+
+message ListComparisonsReq {
+  string keyword = 1;
+  int32 page = 2;
+  int32 page_size = 3;
+}
+
+message ListComparisonsResp {
+  repeated ComparisonItem list = 1;
+  int64 total = 2;
+}
+
+message ExportComparisonReq {
+  int64 comparison_id = 1;
+  string format = 2; // markdown, csv, json
+}
+
+message ExportComparisonResp {
+  string filename = 1;
+  string content_type = 2;
+  bytes data = 3;
+}
+
+service Compare {
+  rpc ListTemplates(papercompare.sdkws.Empty) returns (ListTemplatesResp);
+  rpc CreateTemplate(CreateTemplateReq) returns (ComparisonTemplateItem);
+  rpc DeleteTemplate(papercompare.sdkws.IDReq) returns (papercompare.sdkws.Empty);
+
+  rpc ListComparisons(ListComparisonsReq) returns (ListComparisonsResp);
+  rpc GetComparison(papercompare.sdkws.IDReq) returns (ComparisonItem);
+  rpc CreateComparison(CreateComparisonReq) returns (ComparisonItem);
+  rpc UpdateComparison(UpdateComparisonReq) returns (ComparisonItem);
+  rpc DeleteComparison(papercompare.sdkws.IDReq) returns (papercompare.sdkws.Empty);
+
+  rpc UpdateCell(UpdateCellReq) returns (ComparisonCell);
+  rpc BatchUpdateCells(BatchUpdateCellsReq) returns (ComparisonItem);
+  rpc AutoFill(AutoFillReq) returns (ComparisonItem);
+  rpc AnalyzeDifferences(papercompare.sdkws.IDReq) returns (ComparisonItem);
+  rpc UpdateDiffAnalysis(UpdateDiffAnalysisReq) returns (ComparisonItem);
+  rpc ExportComparison(ExportComparisonReq) returns (ExportComparisonResp);
+}
+

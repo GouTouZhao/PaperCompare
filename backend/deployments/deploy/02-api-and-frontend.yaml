@@ -1,0 +1,126 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: paper-api-deployment
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: paper-api
+  template:
+    metadata:
+      labels:
+        app: paper-api
+    spec:
+      containers:
+        - name: paper-api
+          image: goutouz/paper-api:latest
+          imagePullPolicy: Never
+          env:
+            - name: CONFIG_PATH
+              value: "/config"
+            - name: STORAGE_DATA_DIR
+              value: "/data/storage"
+          volumeMounts:
+            - name: paper-config
+              mountPath: /config
+              readOnly: true
+            - name: paper-storage
+              mountPath: /data/storage
+          ports:
+            - containerPort: 10002
+      volumes:
+        - name: paper-config
+          configMap:
+            name: paper-config
+        - name: paper-storage
+          hostPath:
+            path: /data/papercompare-storage
+            type: DirectoryOrCreate
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: paper-api-service
+spec:
+  selector:
+    app: paper-api
+  ports:
+    - name: http-10002
+      protocol: TCP
+      port: 10002
+      targetPort: 10002
+  type: ClusterIP
+---
+# Frontend ConfigMap, Deployment & Service inside Minikube
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: paper-frontend-nginx-conf
+data:
+  default.conf: |
+    server {
+        listen 80;
+        server_name localhost;
+        client_max_body_size 100M;
+
+        resolver 10.96.0.10 valid=10s ipv6=off;
+
+        location /api/ {
+            proxy_pass http://paper-api-service.default.svc.cluster.local:10002/api/;
+            proxy_http_version 1.1;
+            proxy_set_header Host $host;
+            proxy_set_header X-Real-IP $remote_addr;
+            proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+            proxy_read_timeout 120s;
+        }
+
+        location / {
+            root   /usr/share/nginx/html;
+            index  index.html index.htm;
+            try_files $uri $uri/ /index.html;
+        }
+    }
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: paper-frontend-deployment
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: paper-frontend
+  template:
+    metadata:
+      labels:
+        app: paper-frontend
+    spec:
+      containers:
+        - name: paper-frontend
+          image: goutouz/paper-frontend:latest
+          imagePullPolicy: Never
+          ports:
+            - containerPort: 80
+          volumeMounts:
+            - name: nginx-conf
+              mountPath: /etc/nginx/conf.d/default.conf
+              subPath: default.conf
+      volumes:
+        - name: nginx-conf
+          configMap:
+            name: paper-frontend-nginx-conf
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: paper-frontend-service
+spec:
+  selector:
+    app: paper-frontend
+  ports:
+    - name: http-80
+      protocol: TCP
+      port: 80
+      targetPort: 80
+  type: ClusterIP

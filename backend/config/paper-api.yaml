@@ -1,0 +1,7 @@
+api:
+  listenIP: 0.0.0.0
+  ports: [10002]
+  compressionLevel: 0
+  nodeName: "Node-A (Primary Lab Node)"
+  publicURL: "http://localhost:10002"
+

@@ -1,0 +1,73 @@
+syntax = "proto3";
+
+package papercompare.user;
+
+import "sdkws/sdkws.proto";
+
+option go_package = "github.com/GouTouZhao/PaperCompare/internal/protocol/user;protouser";
+
+message UserInfo {
+  int64 id = 1;
+  string email = 2;
+  string nickname = 3;
+  string bio = 4;
+  repeated string research_fields = 5;
+  string role = 6;
+  int64 created_at = 7;
+}
+
+message RegisterReq {
+  string email = 1;
+  string password = 2;
+  string nickname = 3;
+}
+
+message LoginReq {
+  string email = 1;
+  string password = 2;
+}
+
+message RefreshReq {
+  string refresh_token = 1;
+}
+
+message AuthResp {
+  string access_token = 1;
+  string refresh_token = 2;
+  UserInfo user = 3;
+}
+
+message LogoutReq {
+  string refresh_token = 1;
+}
+
+message UpdateProfileReq {
+  string nickname = 1;
+  string bio = 2;
+  repeated string research_fields = 3;
+}
+
+message ChangePasswordReq {
+  string old_password = 1;
+  string new_password = 2;
+}
+
+message GetUsersInfoReq {
+  repeated int64 user_ids = 1;
+}
+
+message GetUsersInfoResp {
+  map<int64, string> nicknames = 1;
+}
+
+service User {
+  rpc Register(RegisterReq) returns (AuthResp);
+  rpc Login(LoginReq) returns (AuthResp);
+  rpc Refresh(RefreshReq) returns (AuthResp);
+  rpc Logout(LogoutReq) returns (papercompare.sdkws.Empty);
+  rpc GetMe(papercompare.sdkws.Empty) returns (UserInfo);
+  rpc UpdateProfile(UpdateProfileReq) returns (UserInfo);
+  rpc ChangePassword(ChangePasswordReq) returns (papercompare.sdkws.Empty);
+  rpc GetUsersInfo(GetUsersInfoReq) returns (GetUsersInfoResp);
+}
+

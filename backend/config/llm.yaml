@@ -1,0 +1,5 @@
+provider: dashscope
+baseURL: "https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions"
+model: "qwen-plus"
+apiKey: ""
+

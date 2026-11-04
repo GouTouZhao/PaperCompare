@@ -1,0 +1,6 @@
+host: "host.minikube.internal"
+port: 3306
+username: "root"
+password: ""
+dbname: "papercompare"
+

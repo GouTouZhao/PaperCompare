@@ -1,0 +1,5 @@
+rpc:
+  registerIP: 0.0.0.0
+  listenIP: 0.0.0.0
+  port: 10006
+

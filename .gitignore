@@ -1,0 +1,70 @@
+# ==============================================================================
+# PaperCompare - Git Ignore Rules
+# ==============================================================================
+
+# 1. Sensitive Information & Secrets (隐私敏感信息)
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.crt
+backend/deployments/deploy/*secret*.yaml
+!backend/deployments/deploy/*secret*.yaml.example
+
+# 2. Build Artifacts & Binaries (编译产物与二进制文件)
+bin/
+dist/
+out/
+app
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+backend/cmd/api/api
+backend/cmd/rpc/paper-rpc-*
+
+# 3. Frontend Artifacts (前端依赖与打包产物)
+node_modules/
+frontend/node_modules/
+frontend/dist/
+frontend/.cache/
+.npm/
+.vite/
+*.tsbuildinfo
+
+# 4. Storage & Upload Artifacts (运行时存储产物与PDF上传数据)
+storage/
+storage/papers/*
+!storage/papers/.gitkeep
+backend/storage/*
+!backend/storage/.gitkeep
+data/
+uploads/
+temp/
+tmp/
+*.pdf
+*.csv
+
+# 5. Logs & Temporary Files (日志与临时运行文件)
+*.log
+logs/
+*.tmp
+*.bak
+*.swp
+
+# 6. Operating System & IDE Files (系统与IDE缓存)
+.DS_Store
+Thumbs.db
+desktop.ini
+.idea/
+.vscode/
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+
+# 7. 参考项目
+BlogNew/
+FrontBlogNew/

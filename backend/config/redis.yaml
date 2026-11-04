@@ -1,0 +1,4 @@
+host: "paper-redis-service"
+port: 6379
+password: ""
+dbname: 0

@@ -1,0 +1,181 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: paper-user-deployment
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: paper-user
+  template:
+    metadata:
+      labels:
+        app: paper-user
+    spec:
+      containers:
+        - name: paper-user
+          image: goutouz/paper-rpc-user:latest
+          imagePullPolicy: Never
+          env:
+            - name: CONFIG_PATH
+              value: "/config"
+            - name: MYSQL_HOST
+              value: "host.minikube.internal"
+            - name: MYSQL_PORT
+              value: "3306"
+            - name: MYSQL_USER
+              value: "root"
+            - name: MYSQL_DB
+              value: "papercompare"
+          envFrom:
+            - secretRef:
+                name: paper-secret
+          volumeMounts:
+            - name: paper-config
+              mountPath: /config
+              readOnly: true
+          ports:
+            - name: grpc
+              containerPort: 10003
+      volumes:
+        - name: paper-config
+          configMap:
+            name: paper-config
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: paper-user-service
+spec:
+  selector:
+    app: paper-user
+  ports:
+    - name: grpc
+      protocol: TCP
+      port: 10003
+      targetPort: 10003
+  type: ClusterIP
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: paper-paper-deployment
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: paper-paper
+  template:
+    metadata:
+      labels:
+        app: paper-paper
+    spec:
+      containers:
+        - name: paper-paper
+          image: goutouz/paper-rpc-paper:latest
+          imagePullPolicy: Never
+          env:
+            - name: CONFIG_PATH
+              value: "/config"
+            - name: STORAGE_DATA_DIR
+              value: "/data/storage"
+            - name: MYSQL_HOST
+              value: "host.minikube.internal"
+            - name: MYSQL_PORT
+              value: "3306"
+            - name: MYSQL_USER
+              value: "root"
+            - name: MYSQL_DB
+              value: "papercompare"
+          envFrom:
+            - secretRef:
+                name: paper-secret
+          volumeMounts:
+            - name: paper-config
+              mountPath: /config
+              readOnly: true
+            - name: paper-storage
+              mountPath: /data/storage
+          ports:
+            - name: grpc
+              containerPort: 10004
+      volumes:
+        - name: paper-config
+          configMap:
+            name: paper-config
+        - name: paper-storage
+          hostPath:
+            path: /data/papercompare-storage
+            type: DirectoryOrCreate
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: paper-paper-service
+spec:
+  selector:
+    app: paper-paper
+  ports:
+    - name: grpc
+      protocol: TCP
+      port: 10004
+      targetPort: 10004
+  type: ClusterIP
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: paper-compare-deployment
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: paper-compare
+  template:
+    metadata:
+      labels:
+        app: paper-compare
+    spec:
+      containers:
+        - name: paper-compare
+          image: goutouz/paper-rpc-compare:latest
+          imagePullPolicy: Never
+          env:
+            - name: CONFIG_PATH
+              value: "/config"
+            - name: MYSQL_HOST
+              value: "host.minikube.internal"
+            - name: MYSQL_PORT
+              value: "3306"
+            - name: MYSQL_USER
+              value: "root"
+            - name: MYSQL_DB
+              value: "papercompare"
+          envFrom:
+            - secretRef:
+                name: paper-secret
+          volumeMounts:
+            - name: paper-config
+              mountPath: /config
+              readOnly: true
+          ports:
+            - name: grpc
+              containerPort: 10006
+      volumes:
+        - name: paper-config
+          configMap:
+            name: paper-config
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: paper-compare-service
+spec:
+  selector:
+    app: paper-compare
+  ports:
+    - name: grpc
+      protocol: TCP
+      port: 10006
+      targetPort: 10006
+  type: ClusterIP

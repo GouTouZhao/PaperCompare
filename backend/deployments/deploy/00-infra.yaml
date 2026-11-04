@@ -1,0 +1,60 @@
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: paper-service-reader
+rules:
+  - apiGroups: [""]
+    resources: ["services", "endpoints", "pods"]
+    verbs: ["get", "list", "watch"]
+  - apiGroups: ["discovery.k8s.io"]
+    resources: ["endpointslices"]
+    verbs: ["get", "list", "watch"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: paper-service-reader-binding
+subjects:
+  - kind: ServiceAccount
+    name: default
+    namespace: default
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: paper-service-reader
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: paper-redis-deployment
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: paper-redis
+  template:
+    metadata:
+      labels:
+        app: paper-redis
+    spec:
+      containers:
+        - name: paper-redis
+          image: redis:alpine3.22
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 6379
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: paper-redis-service
+spec:
+  selector:
+    app: paper-redis
+  ports:
+    - name: redis-6379
+      protocol: TCP
+      port: 6379
+      targetPort: 6379
+  type: ClusterIP
+
